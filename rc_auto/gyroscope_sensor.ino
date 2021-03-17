@@ -35,7 +35,7 @@ float getPositionalAngle() {
 void gyroscopeUpdateMeasures() {
   mpu.update();
 
-  if (millis() - timerGyro > 3000) { // print data every second
+  if (millis() - timerGyro > 15000) { // print data every second
     Serial.print(F("[gyroscope] TEMPERATURE: ")); Serial.println(mpu.getTemp());
     Serial.print(F("[gyroscope] ACCELERO  X: ")); Serial.print(mpu.getAccX());
     Serial.print("[gyroscope] \tY: "); Serial.print(mpu.getAccY());

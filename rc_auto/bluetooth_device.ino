@@ -1,15 +1,14 @@
 extern Timer<5> timer;
 
 void bluetoothSetup() {
-  Serial2.begin(9600);
-  Serial2.setTimeout(50);
-  Serial2.write("Hola amigo");
+  Serial1.begin(9600);
+  Serial1.setTimeout(50);
 }
 
-void serialEvent2() {
-  if (Serial2.available()) {
+void serialEvent1() {
+  if (Serial1.available()) {
     Serial.print("[bluetooth] Command: ");
-    auto command = Serial2.readString();
+    auto command = Serial1.readString();
     Serial.println(command);
     char lastCharOfCommand = command.charAt(command.length() - 1);
 
@@ -30,21 +29,21 @@ void serialEvent2() {
       driveBackwards();
       delay(200);
       stopCar();
-    } else if (command == "L") {
+    } else if (command == "L" || command == "G" || command == "H") {
       turnLeft();
     } else if (command == "LS") {
       turnLeft();
       delay(250);
       stopCar();
-    } else if (command == "R") {
-      turnRight();
+    } else if (command == "R" || command == "I" || command == "J") {
+      turnRight(false);
     } else if (command == "RS") {
-      turnRight();
+      turnRight(true);
       delay(250);
       stopCar();
     } else if (command == "x") {
       enableAutonomousDriving();
-    } else if (command == "X") {
+    } else if (command == "X" || command == "OK+CONN") {
       disableAutonomousDriving();
     } else if (command.indexOf("OK+LOST") >= 0) {
       stopCar();
@@ -88,7 +87,7 @@ void bluetoothloop() {
   if (Serial.available()) {
     Serial.println("Serial.available()");
     int inByte = Serial.read();
-    Serial2.print(inByte, DEC);
+    Serial1.print(inByte, DEC);
   }
 
   // Serial.print("Tick");

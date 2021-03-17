@@ -19,11 +19,11 @@ void setup()
   ultrasonicSetup();
   motorDriveControllerSetup();
   speedSensorsSetup();
-  //gyroscopeSetup();
+  gyroscopeSetup();
   bluetoothSetup();
   timer.every(250, checkForObstacles);
   timer.every(200, measureDistance);
-  //timer.every(1000, gyroscopeUpdate);
+  timer.every(1000, gyroscopeUpdate);
 }
 
 void loop() {
@@ -48,11 +48,11 @@ bool checkForObstacles() {
   bool hasFrontCollision = wasFrontCrushDetected();
   bool existsFrontObstacle = isFrontObstacleDetected();
   bool existsBackObstacle = isBackObstacleDetected();
-  bool isDrivingFowrard = getIsDrivingFowrard();
+  bool isDrivingDirectionFowrard = getIsDrivingDierctionForward();
   int distanceToObstacle = getLastDistanceToObject();
   bool wasImminentFrontCrashDetected = isImminentFrontCrashDetected(distanceToObstacle, existsFrontObstacle);
 
-  if ((isDrivingFowrard && (wasImminentFrontCrashDetected || hasFrontCollision)) || (!isDrivingFowrard && existsBackObstacle)) {
+  if ((isDrivingDirectionFowrard && (wasImminentFrontCrashDetected || hasFrontCollision)) || (!isDrivingDirectionFowrard && existsBackObstacle)) {
     wasImminentCrashDetected = true;
   } else if (distanceToObstacle < 25) {
     wasObstacleDetected = true;
@@ -61,17 +61,21 @@ bool checkForObstacles() {
   if (wasImminentCrashDetected) {
     stopCar();
     if (isAutonomousDrivingEnable) {
-      avoidObstacle();
+      avoidObstacle(distanceToObstacle);
     }
   } else if (wasObstacleDetected) {
-    slowdownCar();
-  } else if (!isDrivingFowrard && !wasImminentFrontCrashDetected && !hasFrontCollision && isAutonomousDrivingEnable) {
+    enableReducedSpeed();
+  } else if (isAutonomousDrivingEnable && !getIsDrivingFowrard() && !wasImminentFrontCrashDetected && !hasFrontCollision) {
     driveForward();
+  }
+
+  if (getIsDrivingFowrard() && getIsReducedSpeedEnabled() && !wasImminentCrashDetected && !wasObstacleDetected) {
+    disableReducedSpeed();
   }
 
   if (wasImminentCrashDetected || wasObstacleDetected) {
     Serial.print(F("[rc_auto] Is driving forward: "));
-    Serial.println((isDrivingFowrard == 1 ? "true" : "false"));
+    Serial.println((isDrivingDirectionFowrard == 1 ? "true" : "false"));
     Serial.print(F("[rc_auto] Imminent crash detected: "));
     Serial.println((wasImminentCrashDetected == 1 ? "true" : "false"));
     Serial.print(F("[rc_auto] Obstacle detected by ultrasonic sensor: "));
@@ -96,13 +100,14 @@ bool isImminentFrontCrashDetected(unsigned int distanceToObstacle, bool existsFr
   return false;
 }
 
-void avoidObstacle() {
-  bool isDrivingFowrard = getIsDrivingFowrard();
+void avoidObstacle(int distanceToObstacle) {
+  bool isDrivingFowrard = getIsDrivingDierctionForward();
 
-  if (isDrivingFowrard && !isBackObstacleDetected()) {
-    driveBackwards();
+  if (distanceToObstacle > 5) {
+    turnLeft();
     delay(500);
-    // turnLeft(90);
+  } else if (isDrivingFowrard && !isBackObstacleDetected()) {
+    driveBackwards();
   } else if (!isDrivingFowrard && !isFrontObstacleDetected() && !wasFrontCrushDetected() && getLastDistanceToObject() > 15) {
     driveForward();
   }
