@@ -4,30 +4,38 @@
 Timer<5> timer;
 
 int ledPin = LED_BUILTIN;
-bool isAutonomousDrivingEnable = true;
-
+bool isAutonomousDrivingEnable = false;
 
 void setup()
 {
-  Serial.begin(19200);
+  Serial.begin(9600);
   Wire.begin();
 
   pinMode(ledPin, OUTPUT);
 
+  //bluetoothSetup();
   irSensorsSetup();
   carshSensorsSetup();
   ultrasonicSetup();
   motorDriveControllerSetup();
   speedSensorsSetup();
-  gyroscopeSetup();
-  bluetoothSetup();
+  //gyroscopeSetup();
+  wifiSetup();
+
   timer.every(250, checkForObstacles);
   timer.every(200, measureDistance);
-  timer.every(1000, gyroscopeUpdate);
+  // timer.every(1000, gyroscopeUpdate);
+  timer.every(50, wifiLoopCheck);
 }
 
 void loop() {
   timer.tick();
+}
+
+bool wifiLoopCheck() {
+  wifiLoop();
+
+  return true;
 }
 
 bool measureDistance() {

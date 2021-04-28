@@ -7,6 +7,7 @@
 
 extern Timer<5> timer;
 bool _isDrivingDirectionForward = true;
+bool isMakingTurn = false;
 bool isReducedSpeedEnabled = false;
 long initialAngle = 0;
 int pwmOutput = 0; // Map the potentiometer value from 0 to 255
@@ -17,11 +18,12 @@ int getPwmOutput() {
 }
 
 void setPwmOutput(int pwm) {
+  bool isCarMoving = getIsCarMoving();
   pwmOutput = pwm > 255 ? 255 : pwm;
   pwmOutput = pwm >= 0 && pwm <= 50 ? 0 : pwm;
 
   // If the car was moving then update the engines speed.
-  if (getIsCarMoving() && pwmOutput != 0) {
+  if (isCarMoving && pwmOutput != 0 && !isMakingTurn) {
     _isDrivingDirectionForward ? driveForward() : driveBackwards();
   }
 }
@@ -103,6 +105,8 @@ void setRightEngineBackwards() {
 }
 
 void driveForward() {
+  isMakingTurn = false;
+
   if (isEngingeStop()) {
     setPwmOutput(255);
   } else {
@@ -120,6 +124,8 @@ void driveForward() {
 }
 
 void driveBackwards() {
+  isMakingTurn = false;
+
   if (isEngingeStop()) {
     setPwmOutput(255);
   } else {
@@ -169,7 +175,24 @@ void disableReducedSpeed() {
   Serial.println(pwmOutputBeforeReducedSpeed);
 }
 
+void turnLeftInPosition() {
+  isMakingTurn = true;
+  if (_isDrivingDirectionForward) {
+    Serial.println(F("[motor_drive] Left turn forward in current position."));
+    setLeftEngineForwards();
+    setRightEngineBackwards();
+  } else {
+    Serial.println(F("[motor_drive] Left turn backwards in current position."));
+    setLeftEngineBackwards();
+    setRightEngineForwards();
+  }
+  setPwmOutput(255);
+  analogWrite(enL, pwmOutput);
+  analogWrite(enR, pwmOutput);
+}
+
 void turnLeft() {
+  isMakingTurn = true;
   if (getIsCarMoving()) {
     if (_isDrivingDirectionForward) {
       Serial.println(F("[motor_drive] Left forward turn."));
@@ -181,25 +204,31 @@ void turnLeft() {
       analogWrite(enR, pwmOutput);
     }
   } else {
-    if (!getIsCarMoving()) {
-      setPwmOutput(255);
-    }
-    if (_isDrivingDirectionForward) {
-      Serial.println(F("[motor_drive] Left turn in current position."));
-      setRightEngineBackwards();
-      analogWrite(enL, pwmOutput);
-      analogWrite(enR, pwmOutput);
-    } else {
-      Serial.println(F("[motor_drive] Left turn in current position."));
-      setLeftEngineForwards();
-      analogWrite(enL, pwmOutput);
-      analogWrite(enR, pwmOutput);
-    }
+    turnLeftInPosition();
   }
+
   delay(50);
 }
 
+void turnRightInPosition() {
+  isMakingTurn = true;
+  if (_isDrivingDirectionForward) {
+    Serial.println(F("[motor_drive] Right turn forward in current position."));
+    setLeftEngineBackwards();
+    setRightEngineForwards();
+  } else {
+    Serial.println(F("[motor_drive] Right turn backwards in current position."));
+    setLeftEngineForwards();
+    setRightEngineBackwards();
+  }
+
+  setPwmOutput(255);
+  analogWrite(enL, pwmOutput);
+  analogWrite(enR, pwmOutput);
+}
+
 void turnRight(bool makeStopTurn) {
+  isMakingTurn = true;
   if (getIsCarMoving()) {
     if (_isDrivingDirectionForward) {
       Serial.println(F("[motor_drive] Right forward turn."));
@@ -211,21 +240,9 @@ void turnRight(bool makeStopTurn) {
       analogWrite(enR, (pwmOutput / 2));
     }
   } else {
-    if (!getIsCarMoving()) {
-      setPwmOutput(255);
-    }
-    if (_isDrivingDirectionForward) {
-      Serial.println(F("[motor_drive] Right turn in current position."));
-      setLeftEngineBackwards();
-      analogWrite(enL, pwmOutput);
-      analogWrite(enR, pwmOutput);
-    } else {
-      Serial.println(F("[motor_drive] Right turn in current position."));
-      setRightEngineForwards();
-      analogWrite(enL, pwmOutput);
-      analogWrite(enR, pwmOutput);
-    }
+    turnRightInPosition();
   }
+
   delay(50);
 }
 
