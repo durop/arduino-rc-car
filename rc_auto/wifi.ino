@@ -31,13 +31,13 @@ void wifiLoop() {
     Serial.println(input);
 
     deserializeJson(jsonCommand, input);
-    checkCommand(input);
+    checkJoystickCommand();
+    checkButtonCommand();
   }
 }
 
-void checkCommand(char command[200]) {
-  if (jsonCommand.containsKey("x") && jsonCommand.containsKey("y")) {
-
+void checkJoystickCommand() {
+  if (jsonCommand.containsKey("x")) {
     x = jsonCommand["x"];
     y = jsonCommand["y"];
     sw = jsonCommand["sw"];
@@ -46,21 +46,26 @@ void checkCommand(char command[200]) {
       turnRightInPosition();
     } else if (x >= 600) {
       turnLeftInPosition();
-    } else if (y <= 450) {
+    } else if (y <= 450 && !isBackObstacleDetected()) {
       Serial.println("Drive back command");
       driveBackwards();
-    } else if (y >= 550) {
-       Serial.println("Drive forward command");
+    } else if (y >= 550 && !isFrontObstacleDetected()) {
+      Serial.println("Drive forward command");
       driveForward();
     } else {
       stopCar();
     }
-  } else if (command == "x") {
-    //enableAutonomousDriving();
-  } else if (command == "X" || command == "OK+CONN") {
-    //disableAutonomousDriving();
-  }  else {
-    Serial.print("Mensaje No conocido ");
-    Serial.println(command);
+  }
+}
+
+void checkButtonCommand() {
+  if (jsonCommand.containsKey("green") || jsonCommand.containsKey("red")) {
+    if (jsonCommand["green"]) {
+      Serial.println("Autonomous driving enabled");
+      enableAutonomousDriving();
+    } else if (!jsonCommand["green"]) {
+      Serial.println("Autonomous driving disabled");
+      disableAutonomousDriving();
+    }
   }
 }

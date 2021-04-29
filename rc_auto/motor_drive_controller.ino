@@ -42,16 +42,16 @@ bool getIsReducedSpeedEnabled() {
   return isReducedSpeedEnabled;
 }
 
-bool getIsDrivingDierctionForward() {
-  return true;
+bool getIsEngineDierctionForward() {
+  return _isDrivingDirectionForward;
 }
 
 bool getIsDrivingFowrard() {
-  return _isDrivingDirectionForward && pwmOutput > 0;
+  return _isDrivingDirectionForward && pwmOutput > 0 && !isMakingTurn;
 }
 
 bool getIsDrivingBackwards() {
-  return !_isDrivingDirectionForward && pwmOutput > 0;
+  return !_isDrivingDirectionForward && pwmOutput > 0 && !isMakingTurn;
 }
 
 bool isEngingeStop() {
@@ -227,7 +227,7 @@ void turnRightInPosition() {
   analogWrite(enR, pwmOutput);
 }
 
-void turnRight(bool makeStopTurn) {
+void turnRight() {
   isMakingTurn = true;
   if (getIsCarMoving()) {
     if (_isDrivingDirectionForward) {

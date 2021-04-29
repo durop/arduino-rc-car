@@ -23,8 +23,7 @@ void irSensorsSetup() {
 // This is only tirggered by the front right down sensor (only 1 interrupt pin available)
 void emergencyStop() {
   Serial.println(F("[ir_sensor] Emergency stop triggered!!!"));
-  stopCar();
-  delay(1000);
+ // stopCar();
 }
 
 bool isFrontObstacleDetected() {

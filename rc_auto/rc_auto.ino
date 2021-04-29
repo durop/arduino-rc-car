@@ -51,45 +51,44 @@ bool gyroscopeUpdate() {
 }
 
 bool checkForObstacles() {
-  bool wasObstacleDetected = false;
   bool wasImminentCrashDetected = false;
   bool hasFrontCollision = wasFrontCrushDetected();
   bool existsFrontObstacle = isFrontObstacleDetected();
   bool existsBackObstacle = isBackObstacleDetected();
-  bool isDrivingDirectionFowrard = getIsDrivingDierctionForward();
-  int distanceToObstacle = getLastDistanceToObject();
-  bool wasImminentFrontCrashDetected = isImminentFrontCrashDetected(distanceToObstacle, existsFrontObstacle);
+  int distanceToFrontObstacle = getLastDistanceToObject();
+  bool wasImminentFrontCrashDetected = isImminentFrontCrashDetected(distanceToFrontObstacle, existsFrontObstacle);
 
-  if ((isDrivingDirectionFowrard && (wasImminentFrontCrashDetected || hasFrontCollision)) || (!isDrivingDirectionFowrard && existsBackObstacle)) {
+  if (getIsDrivingFowrard() && (wasImminentFrontCrashDetected || hasFrontCollision)) {
+    Serial.println(F("[rc_auto] Automatic stop due to front object."));
+    stopCar();
     wasImminentCrashDetected = true;
-  } else if (distanceToObstacle < 25) {
-    wasObstacleDetected = true;
+  } else if (getIsDrivingBackwards() && existsBackObstacle) {
+    Serial.println(F("[rc_auto] Automatic stop due to back object."));
+    stopCar();
+    wasImminentCrashDetected = true;
   }
 
-  if (wasImminentCrashDetected) {
-    stopCar();
-    if (isAutonomousDrivingEnable) {
-      avoidObstacle(distanceToObstacle);
-    }
-  } else if (wasObstacleDetected) {
+  if (isAutonomousDrivingEnable && wasImminentCrashDetected) {
+    avoidObstacle(distanceToFrontObstacle);
+  } else if (getIsDrivingFowrard() && distanceToFrontObstacle < 25) {
     enableReducedSpeed();
   } else if (isAutonomousDrivingEnable && !getIsDrivingFowrard() && !wasImminentFrontCrashDetected && !hasFrontCollision) {
     driveForward();
   }
 
-  if (getIsDrivingFowrard() && getIsReducedSpeedEnabled() && !wasImminentCrashDetected && !wasObstacleDetected) {
+  if (getIsDrivingFowrard() && getIsReducedSpeedEnabled() && !wasImminentCrashDetected && distanceToFrontObstacle > 25) {
     disableReducedSpeed();
   }
 
-  if (wasImminentCrashDetected || wasObstacleDetected) {
+  if (wasImminentCrashDetected || distanceToFrontObstacle < 25) {
     Serial.print(F("[rc_auto] Is driving forward: "));
-    Serial.println((isDrivingDirectionFowrard == 1 ? "true" : "false"));
+    Serial.println((getIsDrivingFowrard() ? "true" : "false"));
+    Serial.print(F("[rc_auto] Is driving backwards: "));
+    Serial.println((getIsDrivingBackwards() ? "true" : "false"));
     Serial.print(F("[rc_auto] Imminent crash detected: "));
     Serial.println((wasImminentCrashDetected == 1 ? "true" : "false"));
-    Serial.print(F("[rc_auto] Obstacle detected by ultrasonic sensor: "));
-    Serial.println((wasObstacleDetected == 1 ? "true" : "false"));
-    Serial.print(F("[rc_auto] Obstacle detected at "));
-    Serial.println(distanceToObstacle);
+    Serial.print(F("[rc_auto] Front obstacle detected at "));
+    Serial.println(distanceToFrontObstacle);
     Serial.print(F("[rc_auto] Front obstacle detected: "));
     Serial.println((existsFrontObstacle == 1 ? "true" : "false"));
     Serial.print(F("[rc_auto] Back obstacle detected: "));
@@ -109,14 +108,14 @@ bool isImminentFrontCrashDetected(unsigned int distanceToObstacle, bool existsFr
 }
 
 void avoidObstacle(int distanceToObstacle) {
-  bool isDrivingFowrard = getIsDrivingDierctionForward();
+  bool isEngineDierctionForward = getIsEngineDierctionForward();
 
   if (distanceToObstacle > 5) {
     turnLeft();
     delay(500);
-  } else if (isDrivingFowrard && !isBackObstacleDetected()) {
+  } else if (isEngineDierctionForward && !isBackObstacleDetected()) {
     driveBackwards();
-  } else if (!isDrivingFowrard && !isFrontObstacleDetected() && !wasFrontCrushDetected() && getLastDistanceToObject() > 15) {
+  } else if (!isEngineDierctionForward && !isFrontObstacleDetected() && !wasFrontCrushDetected() && getLastDistanceToObject() > 15) {
     driveForward();
   }
 }
